@@ -10,6 +10,7 @@ const cors = require ('cors');
 
 const employeeTypeRoutes = require('../src/routes/employeeTypes.controller');
 const surveyQuestionRoutes = require('../src/routes/surveyQuestion.routes');
+const equipmentSerieRoutes = require('../src/routes/equipmentSerie.routes');
 
 const ENVIRONMENT = process.env.ENVIRONMENT || 'dev';
 const envPath = path.resolve(__dirname, `../.env.${ENVIRONMENT}`);
@@ -24,11 +25,16 @@ app.use(express.json());
 app.use(helmet());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({
+    origin: '*', // Permitir solicitudes desde cualquier origen
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Routes //
 app.use('/api/employee-types', employeeTypeRoutes);
 app.use('/api/survey-question', surveyQuestionRoutes);
+app.use('/api/equipment-serie', equipmentSerieRoutes);
 
 exports.initServer = ()=> app.listen(port, async ()=>
 {
