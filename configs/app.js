@@ -11,6 +11,8 @@ const cors = require ('cors');
 const employeeTypeRoutes = require('../src/routes/employeeTypes.controller');
 const surveyQuestionRoutes = require('../src/routes/surveyQuestion.routes');
 const equipmentSerieRoutes = require('../src/routes/equipmentSerie.routes');
+const clientRoutes = require('../src/routes/client.routes')
+const equipmentRoutes = require('../src/routes/equipment.routes')
 
 const ENVIRONMENT = process.env.ENVIRONMENT || 'dev';
 const envPath = path.resolve(__dirname, `../.env.${ENVIRONMENT}`);
@@ -35,6 +37,8 @@ app.use(cors({
 app.use('/api/employee-types', employeeTypeRoutes);
 app.use('/api/survey-question', surveyQuestionRoutes);
 app.use('/api/equipment-serie', equipmentSerieRoutes);
+app.use('/api/client', clientRoutes)
+app.use('/api/equipment', equipmentRoutes)
 
 exports.initServer = ()=> app.listen(port, async ()=>
 {
