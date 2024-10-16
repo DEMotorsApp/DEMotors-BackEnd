@@ -13,6 +13,7 @@ const surveyQuestionRoutes = require('../src/routes/surveyQuestion.routes');
 const equipmentSerieRoutes = require('../src/routes/equipmentSerie.routes');
 const clientRoutes = require('../src/routes/client.routes')
 const equipmentRoutes = require('../src/routes/equipment.routes')
+const servicesOrdersRoutes = require('../src/routes/servicesOrder.routes')
 
 const ENVIRONMENT = process.env.ENVIRONMENT || 'dev';
 const envPath = path.resolve(__dirname, `../.env.${ENVIRONMENT}`);
@@ -39,6 +40,7 @@ app.use('/api/survey-question', surveyQuestionRoutes);
 app.use('/api/equipment-serie', equipmentSerieRoutes);
 app.use('/api/client', clientRoutes)
 app.use('/api/equipment', equipmentRoutes)
+app.use('/api/services-order', servicesOrdersRoutes)
 
 exports.initServer = ()=> app.listen(port, async ()=>
 {
