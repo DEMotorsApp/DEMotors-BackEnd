@@ -26,9 +26,11 @@ exports.createEquipmentSerie = async (req, res) => {
     try 
     {
         const pool = await sql.connect(config);
+        console.log(jsonInput)
         const result = await pool.request()
             .input('jsonInput', sql.NVarChar(sql.MAX), JSON.stringify(jsonInput))
             .execute('sp_insert_equipment_serie');
+            console.log(result)
             const response = result.recordset[0];
             const { JsonResponse } = response;
             res.status(200).json({response : JSON.parse(JsonResponse)});

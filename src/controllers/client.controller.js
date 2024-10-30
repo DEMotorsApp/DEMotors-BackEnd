@@ -3,18 +3,10 @@ const config = require('../../configs/sqlServerConfig')
 
 exports.createClient = async (req, res) => {
     const {
-        FULL_NAME
     } = req.body
     const jsonInput = req.body
     try {
         const pool = await sql.connect(config)
-        const exitsClient = await pool.request()
-        .input('full_name', sql.NVarChar(100), FULL_NAME)
-        .query('SELECT COUNT(*) AS count FROM CAT_CLIENT WHERE full_name = @full_name')
-
-        if (exitsClient.recordset[0].count > 0)
-            g
-
         const result = await pool.request()
             .input('jsonInput', sql.NVarChar(sql.MAX), JSON.stringify(jsonInput))
             .execute('sp_insert_client')
@@ -55,7 +47,7 @@ exports.getReportClientsEquipment = async (req, res) => {
         .query(`
             SELECT
                 cc.FULL_NAME as CLIENT,
-                cc.DIRECTION,
+                cc.ADDRESS_CLIENT,
                 ces.DESCRIPTION_SERIE as NO_SERIE,
                 FORMAT(cc.ENTRY_DATE, 'dd/MM/yyyy') AS DATE,
                 CASE

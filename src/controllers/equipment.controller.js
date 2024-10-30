@@ -32,7 +32,7 @@ exports.getDetailsEquipment = async (req, res) => {
             .input('end_date', sql.VarChar, endDate)
             .query(`
                 SELECT
-                    cc.DIRECTION,
+                    cc.ADDRESS_CLIENT,
                     FORMAT(cc.ENTRY_DATE, 'dd/MM/yyyy') AS DATE,
                     CASE
                         WHEN pso.WORK_DONE = 1 THEN 'Trabajo Realizado'
