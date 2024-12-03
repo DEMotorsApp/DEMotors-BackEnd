@@ -14,6 +14,7 @@ const equipmentSerieRoutes = require('../src/routes/equipmentSerie.routes');
 const clientRoutes = require('../src/routes/client.routes')
 const equipmentRoutes = require('../src/routes/equipment.routes')
 const servicesOrdersRoutes = require('../src/routes/servicesOrder.routes')
+const imageRoutes = require('../src/routes/image.routes')
 
 const ENVIRONMENT = process.env.ENVIRONMENT || 'dev';
 const envPath = path.resolve(__dirname, `../.env.${ENVIRONMENT}`);
@@ -31,8 +32,14 @@ app.use(bodyParser.json());
 app.use(cors({
     origin: '*', // Permitir solicitudes desde cualquier origen
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
+
+app.use((req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next()
+})
 
 // Routes //
 app.use('/api/employee-types', employeeTypeRoutes);
@@ -41,6 +48,7 @@ app.use('/api/equipment-serie', equipmentSerieRoutes);
 app.use('/api/client', clientRoutes)
 app.use('/api/equipment', equipmentRoutes)
 app.use('/api/services-order', servicesOrdersRoutes)
+app.use('/api/image', imageRoutes)
 
 exports.initServer = ()=> app.listen(port, async ()=>
 {
