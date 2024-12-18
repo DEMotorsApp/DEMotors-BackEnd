@@ -8,11 +8,13 @@ exports.uploadImage = async (req, res) => {
   try {
     const pool = await sql.connect(config)
     const result = await pool.request()
-      .input('idServiceOrder', sql.Int, idServiceOrder)
+      .input('servicesOrder', sql.VarChar, idServiceOrder)
       .input('namePath', sql.VarChar(sql.MAX), req.file.filename)
-      .query('INSERT INTO CAT_IMAGE_SERVICE (ID_SERVICES_ORDER, NAME_PATH) VALUES (@idServiceOrder, @namePath)')
+      .execute('sp_insert_image')
 
-    res.status(200).json({ response: 'Imagen subida exitosamente.', filePath: req.file.path })
+    const response = result.recordset[0]
+    const { JsonResponse } = response
+    res.status(200).json({ response: JSON.parse(JsonResponse) })
 
   } catch (e) {
     console.log(e)
@@ -32,7 +34,7 @@ exports.getImages = async (req, res) => {
     let image = []
     const pool = await sql.connect(config)
     const result = await pool.request()
-      .input('idServiceOrder', sql.Int, idServiceOrder)
+      .input('servicesOrder', sql.VarChar, idServiceOrder)
       .query(`
           SELECT
             pso.NO_ORDER,
@@ -44,10 +46,10 @@ exports.getImages = async (req, res) => {
             ces.DESCRIPTION_SERIE AS SERIE
           FROM PRO_SERVICE_ORDER pso
           INNER JOIN CAT_IMAGE_SERVICE cis ON cis.ID_SERVICES_ORDER = pso.ID_SERVICE_ORDER
-          INNER JOIN CAT_CLIENT cc ON pso.ID_CLIENT = cc.ID_CLIENT
-          INNER JOIN CAT_EQUIPMENT ce ON pso.ID_EQUIPMENT = ce.ID_EQUIPMENT
-          INNER JOIN CAT_EQUIPMENT_SERIE ces ON ce.ID_SERIE = ces.ID_SERIE
-          WHERE cis.ID_SERVICES_ORDER = @idServiceOrder
+          LEFT OUTER JOIN CAT_CLIENT cc ON pso.ID_CLIENT = cc.ID_CLIENT
+          LEFT OUTER JOIN CAT_EQUIPMENT ce ON pso.ID_EQUIPMENT = ce.ID_EQUIPMENT
+          LEFT OUTER JOIN CAT_EQUIPMENT_SERIE ces ON ce.ID_SERIE = ces.ID_SERIE
+          WHERE pso.NO_ORDER = @servicesOrder
         `)
 
     console.log('result => ', result)

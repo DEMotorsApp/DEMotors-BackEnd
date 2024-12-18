@@ -4,5 +4,6 @@ const servicesOrdersController = require('../controllers/servicesOrder.controlle
 
 router.get('/getServicesOrders/:idClient/:startDate/:endDate', servicesOrdersController.getServicesOrders)
 router.post('/createServicesOrders', servicesOrdersController.createServicesOrder)
+router.get('/validateServicesOrder/:idServiceOrder', servicesOrdersController.validateServicesOrder)
 
 module.exports = router

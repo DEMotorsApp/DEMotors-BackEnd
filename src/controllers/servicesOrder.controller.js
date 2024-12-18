@@ -61,3 +61,25 @@ exports.createServicesOrder = async (req, res) => {
         })
     }
 }
+
+exports.validateServicesOrder = async (req, res) => {
+    const { idServiceOrder } = req.params
+
+    try {
+        console.log('Entro la validacion')
+        const pool = await sql.connect(config)
+        const result = await pool.request()
+            .input('servicesOrder', sql.VarChar, idServiceOrder)
+            .query(`
+                SELECT COUNT(*) AS VALIDATE_SERVICES FROM PRO_SERVICE_ORDER pso WHERE NO_ORDER = @servicesOrder
+            `)
+        console.log('result => ', result)
+        res.status(200).json({ response: result.recordset })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            status: 'ERROR',
+            message: 'Error al validar las ordenes de servicio'
+        })
+    }
+}
