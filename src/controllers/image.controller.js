@@ -57,7 +57,7 @@ exports.getImages = async (req, res) => {
     if (result.recordset && result.recordset.length > 0) {
       image = result.recordset.map((item) => ({
         ...item,
-        NAME_PATH: `http://localhost:3200/api/image/static/${item.NAME_PATH}`
+        NAME_PATH: `https://app.demotorsguatemala.com:3000/api/image/static/${item.NAME_PATH}`
       }))
     }
         
