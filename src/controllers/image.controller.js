@@ -1,15 +1,38 @@
 const sql = require('mssql')
 const config = require('../../configs/sqlServerConfig')
+const path = require('path')
+
+const moveFile = (file, uploadPath) => {
+  return new Promise((resolve, reject) => {
+    file.mv(uploadPath, (err) => {
+      if (err) reject(err)
+      else resolve()
+    })
+  })
+}
 
 exports.uploadImage = async (req, res) => {
   const {
     idServiceOrder
   } = req.body
   try {
+    const {
+      file
+    } = req.files
+
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    const timestamp = Date.now()
+    const fileExtension = path.extname(file.name)
+    const newFileName = `${uniqueSuffix}-${timestamp}${fileExtension}`
+
+    const uploadPath = path.join('C:/uploads/', newFileName)
+
+    await moveFile(file, uploadPath)
+
     const pool = await sql.connect(config)
     const result = await pool.request()
       .input('servicesOrder', sql.VarChar, idServiceOrder)
-      .input('namePath', sql.VarChar(sql.MAX), req.file.filename)
+      .input('namePath', sql.VarChar(sql.MAX), newFileName)
       .execute('sp_insert_image')
 
     const response = result.recordset[0]
@@ -23,8 +46,76 @@ exports.uploadImage = async (req, res) => {
       message: 'Error al insertar los datos de la imagen'
     })
   }
-  if (!req.file) {
-    return res.status(400).send({ message: 'No se subió ningún archivo.' });
+}
+
+exports.getImagesReportEquipment = async (req, res) => {
+  const { idClient, noSerie, startDate, endDate } = req.params
+  try {
+    const pool = await sql.connect(config)
+    const result = await pool.request()
+      .input('idClient', sql.Int, idClient)
+      .input('no_serie', sql.VarChar, noSerie)
+      .input('start_date', sql.VarChar, startDate)
+      .input('end_date', sql.VarChar, endDate)
+      .query(`
+          SELECT
+            NAME_PATH
+          FROM CAT_IMAGE_SERVICE cis
+          INNER JOIN PRO_SERVICE_ORDER pro ON pro.ID_SERVICE_ORDER = cis.ID_SERVICES_ORDER
+          INNER JOIN DB_DEMOTORS_DESARROLLO.dbo.CAT_CLIENT cc ON cc.ID_CLIENT =  pro.ID_CLIENT
+          INNER JOIN DB_DEMOTORS_DESARROLLO.dbo.CAT_EQUIPMENT ce ON ce.ID_EQUIPMENT = pro.ID_EQUIPMENT
+          INNER JOIN DB_DEMOTORS_DESARROLLO.dbo.CAT_EQUIPMENT_SERIE ces on ces.ID_SERIE = ce.ID_SERIE
+          WHERE pro.ID_CLIENT = @idClient
+          AND ces.DESCRIPTION_SERIE = @no_serie
+          AND cc.ENTRY_DATE BETWEEN CONVERT(datetime, @start_date, 21) AND CONVERT(datetime, @end_date, 21)
+      `)
+      if (result.recordset && result.recordset.length > 0) {
+        dataImagenes = result.recordset.map((item) => ({
+          NOMBRE_IMAGEN: `http://localhost:3200/api/image/static/${item.NAME_PATH}`
+        }))
+      }
+  
+    res.status(200).json({ response: dataImagenes })
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Error al obtener los detalles de los equipos'
+    })
+  }
+}
+
+exports.getImagesReportClient = async (req, res) => {
+  const { idClient, startDate, endDate } = req.params
+  try {
+    let dataImagenes = []
+    const pool = await sql.connect(config)
+    const result = await pool.request()
+      .input('idClient', sql.VarChar, idClient)
+      .input('start_date', sql.VarChar, startDate)
+      .input('end_date', sql.VarChar, endDate)
+      .query(`
+        SELECT
+          NAME_PATH
+        FROM CAT_IMAGE_SERVICE cis
+        INNER JOIN PRO_SERVICE_ORDER pro ON pro.ID_SERVICE_ORDER = cis.ID_SERVICES_ORDER
+        INNER JOIN DB_DEMOTORS_DESARROLLO.dbo.CAT_CLIENT cc ON cc.ID_CLIENT =  pro.ID_CLIENT
+        WHERE pro.ID_CLIENT = @idClient
+        AND cc.ENTRY_DATE BETWEEN CONVERT(datetime, @start_date, 21) AND CONVERT(datetime, @end_date, 21)
+      `)
+
+    if (result.recordset && result.recordset.length > 0) {
+      dataImagenes = result.recordset.map((item) => ({
+        NOMBRE_IMAGEN: `http://localhost:3200/api/image/static/${item.NAME_PATH}`
+      }))
+    }
+
+    res.status(200).json({ response: dataImagenes })
+  } catch (e) {
+    res.status(500).json({
+      status: 'ERROR',
+      message: `Error al obtener las imagenes ${e}`
+    })
   }
 }
 
@@ -57,10 +148,10 @@ exports.getImages = async (req, res) => {
     if (result.recordset && result.recordset.length > 0) {
       image = result.recordset.map((item) => ({
         ...item,
-        NAME_PATH: `https://app.demotorsguatemala.com:3000/api/image/static/${item.NAME_PATH}`
+        NAME_PATH: `http://localhost:3200/api/image/static/${item.NAME_PATH}`
       }))
     }
-        
+
     res.status(200).json({ response: image })
   } catch (e) {
     res.status(500).json({
