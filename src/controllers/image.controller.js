@@ -25,7 +25,7 @@ exports.uploadImage = async (req, res) => {
     const fileExtension = path.extname(file.name)
     const newFileName = `${uniqueSuffix}-${timestamp}${fileExtension}`
 
-    const uploadPath = path.join('C:/uploads/', newFileName)
+    const uploadPath = path.join('/var/app/uploads', newFileName)
 
     await moveFile(file, uploadPath)
 
