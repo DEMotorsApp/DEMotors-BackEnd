@@ -36,6 +36,54 @@ exports.getClients = async (req, res) => {
     }
 }
 
+exports.getClientsServices = async (req, res) => {
+    try {
+        const pool = await sql.connect(config)
+        const result = await pool.request().query('SELECT * FROM CAT_CLIENT ORDER BY 1 DESC')
+        res.status(200).json({ response: result.recordset })
+    } catch (err) {
+        res.status(500).json({
+            status: 'ERROR',
+            message: `Error al obtener Clientes ${err}`
+        });
+    }
+}
+
+exports.getClient = async (req, res) => {
+    const { idClient } = req.params
+    try {
+        const pool = await sql.connect(config)
+        const result = await pool.request()
+        .input('id_client', idClient)
+        .query('SELECT * FROM CAT_CLIENT cc WHERE cc.ID_CLIENT = @id_client')
+        res.status(200).json({ response: result.recordset })
+    } catch (err) {
+        res.status(500).json({
+            status: 'ERROR',
+            message: `Error al obtener Clientes ${err}`
+        });
+    }
+}
+
+exports.deleteClient = async (req, res) => {
+    const { idClient } = req.params
+    try {
+        const pool = await sql.connect(config)
+        const result = await pool.request()
+            .input('id_client', idClient)
+            .query('DELETE FROM CAT_CLIENT WHERE ID_CLIENT = @id_client')
+        res.status(200).json({ response: {
+            status: 'SUCCESS',
+            message: 'El cliente fue eliminado exitosamente'
+        } })
+    } catch (err) {
+        res.status(500).json({
+            status: 'ERROR',
+            message: `Error al obtener Clientes ${err}`
+        });
+    }
+}
+
 exports.getReportClientsEquipment = async (req, res) => {
     const { idClient, startDate, endDate } = req.params
     try {

@@ -48,6 +48,36 @@ exports.getServicesOrders = async (req, res) => {
     }
 };
 
+exports.getClientServices = async (req, res) => {
+    const { servicesOrder } = req.params
+    try {
+        const pool = await sql.connect(config);
+        const result = await pool.request()
+            .input('services_order', sql.VarChar, servicesOrder)
+            .query(`
+            SELECT
+                cc.ID_CLIENT,
+                cc.EMAIL,
+                cc.ADDRESS_CLIENT,
+                cc.PHONE_NUMBER,
+                cc.NIT,
+                cc.FULL_NAME,
+                cc.ENTRY_DATE
+            FROM PRO_SERVICE_ORDER_CLIENT psoc
+            INNER JOIN CAT_CLIENT cc ON cc.ID_CLIENT = psoc.ID_CLIENT
+            INNER JOIN PRO_SERVICE_ORDER pso ON pso.ID_SERVICE_ORDER = psoc.ID_SERVICE_ORDER
+            WHERE pso.NO_ORDER = @services_order
+        `);
+        res.status(200).json({ response: result.recordset })
+    }
+    catch (err) {
+        res.status(500).json({
+            status: 'ERROR',
+            message: `Error al obtener Ordenes de servicio. ${err}`
+        });
+    }
+}
+
 exports.createServicesOrder = async (req, res) => {
     const jsonInput = req.body
     try {
@@ -56,6 +86,47 @@ exports.createServicesOrder = async (req, res) => {
         const result = await pool.request()
             .input('jsonInput', sql.NVarChar(sql.MAX), JSON.stringify(jsonInput))
             .execute('sp_insert_services_order')
+        console.log(result)
+        const response = result.recordset[0]
+        const { JsonResponse } = response
+        res.status(200).json({ response: JSON.parse(JsonResponse) })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            status: 'ERROR',
+            message: 'Error al inserte los datos de la orden de servicios'
+        })
+    }
+}
+
+exports.deleteClientServices = async (req, res) => {
+    const { servicesOrder, idClient } = req.params
+    try {
+        const pool = await sql.connect(config)
+        const result = await pool.request()
+            .input('services_order', sql.NVarChar(sql.MAX), servicesOrder)
+            .input('id_client', sql.Int, idClient)
+            .execute('sp_delete_client_services')
+        const response = result.recordset[0]
+        const { JsonResponse } = response
+        res.status(200).json({ response: JSON.parse(JsonResponse) })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            status: 'ERROR',
+            message: 'Error al eliminar datos del cliente en la orden de servicio'
+        })
+    }
+}
+
+exports.createClientServices = async (req, res) => {
+    const jsonInput = req.body
+    try {
+        console.log(jsonInput)
+        const pool = await sql.connect(config)
+        const result = await pool.request()
+            .input('jsonInput', sql.NVarChar(sql.MAX), JSON.stringify(jsonInput))
+            .execute('sp_insert_client_services')
         console.log(result)
         const response = result.recordset[0]
         const { JsonResponse } = response
