@@ -1,6 +1,12 @@
 const sql = require('mssql')
 const config = require('../../configs/sqlServerConfig')
 const path = require('path')
+const { default: axios } = require('axios')
+const https = require('https')
+
+const instance = axios.create({
+  httpsAgent: new https.Agent({ rejectUnauthorized: false })
+})
 
 const moveFile = (file, uploadPath) => {
   return new Promise((resolve, reject) => {
@@ -129,15 +135,15 @@ exports.getImages = async (req, res) => {
       .query(`
           SELECT
             pso.NO_ORDER,
-            cis.NAME_PATH,
+            cis.IMAGE_NAME,
             cc.FULL_NAME AS CLIENT,
             ce.ENGINE,
             ce.MODEL_1,
             ce.MODEL_2,
             ces.DESCRIPTION_SERIE AS SERIE
           FROM PRO_SERVICE_ORDER pso
-          INNER JOIN CAT_IMAGE_SERVICE cis ON cis.ID_SERVICES_ORDER = pso.ID_SERVICE_ORDER
-          LEFT OUTER JOIN CAT_CLIENT cc ON pso.ID_CLIENT = cc.ID_CLIENT
+          INNER JOIN PRO_SERVICE_ORDER_IMAGE cis ON cis.ID_SERVICE_ORDER = pso.ID_SERVICE_ORDER
+          LEFT OUTER JOIN CAT_CLIENT cc ON pso.ID_CUSTOMER = cc.ID_CLIENT
           LEFT OUTER JOIN CAT_EQUIPMENT ce ON pso.ID_EQUIPMENT = ce.ID_EQUIPMENT
           LEFT OUTER JOIN CAT_EQUIPMENT_SERIE ces ON ce.ID_SERIE = ces.ID_SERIE
           WHERE pso.NO_ORDER = @servicesOrder
@@ -146,14 +152,26 @@ exports.getImages = async (req, res) => {
     console.log('result => ', result)
 
     if (result.recordset && result.recordset.length > 0) {
-      image = result.recordset.map((item) => ({
-        ...item,
-        NAME_PATH: `http://localhost:3200/api/image/static/${item.NAME_PATH}`
-      }))
+      for await (const obj of result.recordset) {
+        console.log(`https://app.demotorsguatemala.com:3000/bucket/uploads/serviceOrderImages/${obj.NO_ORDER}/${obj.IMAGE_NAME}`)
+        const response = await instance.get(`https://app.demotorsguatemala.com:3000/bucket/uploads/serviceOrderImages/${obj.NO_ORDER}/${obj.IMAGE_NAME}`, {
+          responseType: 'arraybuffer'
+        })
+        const imageBuffer = Buffer.from(response.data, 'binary')
+        const base64Image = imageBuffer.toString('base64')
+        const image64 = `data:${response.headers['content-type']};base64,${base64Image}`
+        console.log('image64 => ', image64)
+        image.push(image64)
+        // ximage.push([...image, {...obj, prueba: image64}])
+      }
     }
-
-    res.status(200).json({ response: image })
+    delete result.recordset[0].IMAGE_NAME
+    res.status(200).json({ response: {
+      ...result.recordset[0],
+      image
+    } })
   } catch (e) {
+    console.log(e)
     res.status(500).json({
       status: 'ERROR',
       message: `Error al obtener las imagenes ${e}`
